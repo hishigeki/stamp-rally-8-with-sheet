@@ -79,10 +79,16 @@ function callGas(params, callbackName) {
   url.searchParams.set("callback", callbackName);
 
   const script = document.createElement("script");
+
+  script.onerror = () => {
+    showResult("GASへ接続できません。URLまたはデプロイ設定を確認してください。", "ng");
+    html5QrCode.resume();
+  };
+
   script.src = url.toString();
   document.body.appendChild(script);
 }
-
+  
 function showResult(html, type) {
   const result = document.getElementById("result");
   result.className = "card " + type;
