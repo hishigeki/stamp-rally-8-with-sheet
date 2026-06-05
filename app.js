@@ -4,7 +4,6 @@ const FINISHED_KEY = "festival_stamp_rally_8_sheet_finished_stamp-rally-8-with-s
 const PARTICIPANT_KEY = "festival_stamp_rally_8_sheet_participant_id_stamp-rally-8-with-sheet";
 const INTRO_KEY = "festival_stamp_rally_8_sheet_intro_seen_stamp-rally-8-with-sheet";
 
-// ここにGASをデプロイして取得したWebアプリURLを貼り付けます。
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzt2eWrmcsGJIsO_fwOxzGXr81KA1Gk5cDMKDAUfARwXBedq_0W8XHESSgWO5ib6_ZAvQ/exec";
 
 const API_TOKEN = "api_1438d5a18d8959b0b8479f6e0a5cb2f9";
@@ -12,46 +11,14 @@ const FINISH_TOKEN = "finish_8375c30e5d902b3d7b61e3d8";
 const RESET_TOKEN = "reset_54684587fc46e0d51ad57570";
 
 const STAMP_MAP = [
-  {
-    "number": "01",
-    "token": "iytxZcSakuDpGpR4aV8",
-    "image": "img_deaec71cbd1ec57d.png"
-  },
-  {
-    "number": "02",
-    "token": "rtFAMJCTyPCCZ9303ME",
-    "image": "img_1be1988cec79788d.png"
-  },
-  {
-    "number": "03",
-    "token": "2fYAxU9nmwEroXuFWBI",
-    "image": "img_d3382ce894330f9a.png"
-  },
-  {
-    "number": "04",
-    "token": "HUxnu8G6eK3nOYj2f6E",
-    "image": "img_e28559c223c3a2f8.png"
-  },
-  {
-    "number": "05",
-    "token": "73yHFIRBWgSBxGalVr0",
-    "image": "img_1fd3d1a33b9f3be3.png"
-  },
-  {
-    "number": "06",
-    "token": "k8cghnw6UOMpN1aBIFA",
-    "image": "img_5fb647b410880919.png"
-  },
-  {
-    "number": "07",
-    "token": "TErMTIWyibvugV7P5o0",
-    "image": "img_93b993ef1787e3cf.png"
-  },
-  {
-    "number": "08",
-    "token": "7UpmTxjN6YIJpsk4K5A",
-    "image": "img_cd7d4b4a6ccfb77d.png"
-  }
+  {"number":"01","token":"iytxZcSakuDpGpR4aV8","image":"img_deaec71cbd1ec57d.png"},
+  {"number":"02","token":"rtFAMJCTyPCCZ9303ME","image":"img_1be1988cec79788d.png"},
+  {"number":"03","token":"2fYAxU9nmwEroXuFWBI","image":"img_d3382ce894330f9a.png"},
+  {"number":"04","token":"HUxnu8G6eK3nOYj2f6E","image":"img_e28559c223c3a2f8.png"},
+  {"number":"05","token":"73yHFIRBWgSBxGalVr0","image":"img_1fd3d1a33b9f3be3.png"},
+  {"number":"06","token":"k8cghnw6UOMpN1aBIFA","image":"img_5fb647b410880919.png"},
+  {"number":"07","token":"TErMTIWyibvugV7P5o0","image":"img_93b993ef1787e3cf.png"},
+  {"number":"08","token":"7UpmTxjN6YIJpsk4K5A","image":"img_cd7d4b4a6ccfb77d.png"}
 ];
 
 const introScreen = document.getElementById("introScreen");
@@ -65,6 +32,7 @@ const noticeBox = document.getElementById("noticeBox");
 const completeArea = document.getElementById("completeArea");
 const finishedArea = document.getElementById("finishedArea");
 const participantDisplay = document.getElementById("participantDisplay");
+const participantQrArea = document.getElementById("participantQrArea");
 const claimResultText = document.getElementById("claimResultText");
 
 function showIntroOnce() {
@@ -140,7 +108,6 @@ function sendLog(data) {
     ...data
   };
 
-  // 送信結果を待たずに記録します。CORSエラーを避けるため no-cors を使います。
   fetch(GAS_URL, {
     method: "POST",
     mode: "no-cors",
@@ -213,11 +180,7 @@ function handleUrlAction() {
       renderBoard();
     };
 
-    jsonp({
-      action:"claimPrize",
-      participantId,
-      stampCount:loadStamps().length
-    }, "handlePrizeResult");
+    jsonp({action:"claimPrize", participantId, stampCount:loadStamps().length}, "handlePrizeResult");
 
     cleanUrl();
     return;
@@ -271,6 +234,17 @@ function handleUrlAction() {
   cleanUrl();
 }
 
+function showParticipantQr(participantId) {
+  if (!participantQrArea) return;
+  const qrText = encodeURIComponent(participantId);
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrText}`;
+  participantQrArea.innerHTML = `
+    <p>参加者ID確認用QR</p>
+    <img src="${qrUrl}" alt="参加者ID QRコード" width="180" height="180">
+    <p class="participant-id-text">${participantId}</p>
+  `;
+}
+
 function renderBoard() {
   const stamps = loadStamps();
   const finished = isFinished();
@@ -310,14 +284,17 @@ function renderBoard() {
     completeText.textContent = "終了";
     completeArea.classList.add("hidden");
     finishedArea.classList.remove("hidden");
+    if (participantQrArea) participantQrArea.innerHTML = "";
   } else if (count >= STAMP_TOTAL) {
     completeText.textContent = "コンプリート";
     completeArea.classList.remove("hidden");
     finishedArea.classList.add("hidden");
+    showParticipantQr(participantId);
   } else {
     completeText.textContent = `あと ${STAMP_TOTAL - count} 個`;
     completeArea.classList.add("hidden");
     finishedArea.classList.add("hidden");
+    if (participantQrArea) participantQrArea.innerHTML = "";
   }
 }
 
