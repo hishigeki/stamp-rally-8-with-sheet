@@ -160,10 +160,19 @@ function claimPrize() {
 }
 
 function onScanSuccess(decodedText) {
+  html5QrCode.pause(true);
+
   const participantId = decodedText.trim();
+
+  showResult(`
+    <h2>QRを読み取りました</h2>
+    <p>${participantId}</p>
+    <p>Spreadsheetを確認中です...</p>
+  `, "warn");
 
   if (!participantId.startsWith("DX-")) {
     showResult("このQRコードは参加者IDではありません。", "ng");
+    html5QrCode.resume();
     return;
   }
 
