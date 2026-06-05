@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>景品交換管理</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f7f7f7;
+      padding: 16px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #reader {
+      width: 100%;
+      max-width: 420px;
+      margin: auto;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 16px;
+      text-align: center;
+      border: 2px solid #ddd;
+    }
+    .ok {
+      border-color: #2ecc71;
+      background: #f0fff5;
+    }
+    .ng {
+      border-color: #e74c3c;
+      background: #fff0f0;
+    }
+    .warn {
+      border-color: #f1c40f;
+      background: #fffbea;
+    }
+    button {
+      font-size: 20px;
+      padding: 14px 20px;
+      border-radius: 10px;
+      border: none;
+      background: #2ecc71;
+      color: white;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>景品交換管理</h1>
+
+<div id="reader"></div>
+
+<div id="result" class="card">
+  参加者のコンプリート画面のQRコードを読み取ってください。
+</div>
+
+<script>
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycbzt2eWrmcsGJIsO_fwOxzGXr81KA1Gk5cDMKDAUfARwXBedq_0W8XHESSgWO5ib6_ZAvQ/exec";
+
+const API_TOKEN = "api_1438d5a18d8959b0b8479f6e0a5cb2f9";
+
+let currentParticipantId = "";
+
+function callGas(params, callbackName) {
+  const url = new URL(GAS_URL);
+
+  for (const key in params) {
+    url.searchParams.set(key, params[key]);
+  }
+
+  url.searchParams.set("token", API_TOKEN);
+  url.searchParams.set("callback", callbackName);
+
+  const script = document.createElement("script");
+  script.src = url.toString();
+  document.body.appendChild(script);
+}
+
+function showResult(html, type) {
+  const result = document.getElementById("result");
+  result.className = "card " + type;
+  result.innerHTML = html;
+}
+
+function checkPrize(participantId) {
+  currentParticipantId = participantId;
+
+  window.handleCheckPrize = function(res) {
+    if (!res || !res.result) {
+      showResult("確認に失敗しました。", "ng");
+      return;
+    }
+
+    if (res.result === "OK") {
+      showResult(`
+        <h2>交換OK</h2>
+        <p>${participantId}</p>
+        <p>景品を渡してください。</p>
+        <button onclick="claimPrize()">交換済みにする</button>
+      `, "ok");
+    } else if (res.result === "DUPLICATE") {
+      showResult(`
+        <h2>交換済み</h2>
+        <p>${participantId}</p>
+        <p>この参加者には、すでに景品を渡しています。</p>
+      `, "ng");
+    } else if (res.result === "NOT_COMPLETE") {
+      showResult(`
+        <h2>未コンプリート</h2>
+        <p>${participantId}</p>
+        <p>まだ景品交換できません。</p>
+      `, "warn");
+    } else {
+      showResult(`
+        <h2>不明なID</h2>
+        <p>${participantId}</p>
+        <p>Spreadsheetに記録がありません。</p>
+      `, "ng");
+    }
+  };
+
+  callGas({
+    action: "checkPrize",
+    participantId: participantId
+  }, "handleCheckPrize");
+}
+
+function claimPrize() {
+  window.handleClaimPrize = function(res) {
+    if (res.result === "OK") {
+      showResult(`
+        <h2>交換完了</h2>
+        <p>${currentParticipantId}</p>
+        <p>Spreadsheetに交換済みとして記録しました。</p>
+      `, "ok");
+    } else if (res.result === "DUPLICATE") {
+      showResult(`
+        <h2>交換済み</h2>
+        <p>すでに交換済みです。</p>
+      `, "ng");
+    } else {
+      showResult(`
+        <h2>交換できません</h2>
+        <p>${res.result}</p>
+      `, "warn");
+    }
+  };
+
+  callGas({
+    action: "claimPrize",
+    participantId: currentParticipantId
+  }, "handleClaimPrize");
+}
+
+function onScanSuccess(decodedText) {
+  const participantId = decodedText.trim();
+
+  if (!participantId.startsWith("DX-")) {
+    showResult("このQRコードは参加者IDではありません。", "ng");
+    return;
+  }
+
+  checkPrize(participantId);
+}
+
+const html5QrCode = new Html5Qrcode("reader");
+
+html5QrCode.start(
+  { facingMode: "environment" },
+  { fps: 10, qrbox: 250 },
+  onScanSuccess
+);
+</script>
+
+</body>
+</html>
