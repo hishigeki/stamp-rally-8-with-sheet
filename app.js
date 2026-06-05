@@ -235,13 +235,14 @@ function handleUrlAction() {
 }
 
 function showParticipantQr(participantId) {
-  if (!participantQrArea) return;
   const qrText = encodeURIComponent(participantId);
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrText}`;
+  const qrUrl =
+    `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${qrText}`;
+
   participantQrArea.innerHTML = `
-    <p>参加者ID確認用QR</p>
-    <img src="${qrUrl}" alt="参加者ID QRコード" width="180" height="180">
-    <p class="participant-id-text">${participantId}</p>
+    <p>景品交換用QR</p>
+    <img src="${qrUrl}" width="180" height="180">
+    <p>${participantId}</p>
   `;
 }
 
