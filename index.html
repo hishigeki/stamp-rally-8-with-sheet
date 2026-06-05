@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>学園祭スタンプラリー</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="app">
+  <section id="introScreen" class="intro hidden">
+    <h1>すたんぷらりーへようこそ</h1>
+    <p>QRコードをよんで<br>すたんぷをあつめよう</p>
+    <p>なまえやでんわばんごうは<br>あつめません</p>
+  </section>
+
+  <section id="mainScreen">
+    <header>
+      <p class="eyebrow">学園祭</p>
+      <h1>Webスタンプラリー</h1>
+    </header>
+
+    <section id="messageBox" class="message info">
+      QRコードを読み取ると、ここにスタンプが集まります。
+    </section>
+
+    <section id="noticeBox" class="notice hidden"></section>
+
+    <section class="progress-card">
+      <div class="progress-text">
+        <span id="countText">0 / 8</span>
+        <span id="completeText">スタンプを集めよう</span>
+      </div>
+      <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
+    </section>
+
+    <section id="stampBoard" class="stamp-board"></section>
+
+    <section id="completeArea" class="complete-area hidden">
+      <h2>🎉 コンプリート！ 🎉</h2>
+      <p>景品交換所の201号室でこの画面を見せてください。</p>
+      <p id="participantDisplay" class="participant"></p>
+      <p class="note">景品を受け取ったら、景品交換所の「受け取り済みQR」を読み取ってください。</p>
+    </section>
+
+    <section id="finishedArea" class="finished-area hidden">
+      <h2>景品受け取り済み</h2>
+      <p id="claimResultText">ご参加ありがとうございました。</p>
+    </section>
+
+    <details class="rule-box">
+      <summary>ルールをみる</summary>
+      <p>QRコードをよんで、スタンプをあつめます。</p>
+      <p>8こあつめたら、201号室でけいひんとこうかんできます。</p>
+      <p>なまえ、じゅうしょ、でんわばんごう、メールアドレスはあつめません。</p>
+      <p>スタンプをよんだじかんと、スタンプばんごうだけをきろくします。</p>
+    </details>
+
+    <footer class="footer">
+      <p>スタンプ取得状況は学園祭運営の改善のために記録します。</p>
+    </footer>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

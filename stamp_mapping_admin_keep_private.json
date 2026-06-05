@@ -1,0 +1,51 @@
+{
+  "base_url": "https://hishigeki.github.io/stamp-rally-8-with-sheet/",
+  "spreadsheet_id": "1TKfOE8N8-68xu3oRC798vPgsN9XEbq37P6kUgUS1nr8",
+  "stamp_total": 8,
+  "api_token": "api_1438d5a18d8959b0b8479f6e0a5cb2f9",
+  "finish_token": "finish_8375c30e5d902b3d7b61e3d8",
+  "reset_token": "reset_54684587fc46e0d51ad57570",
+  "stamps": [
+    {
+      "number": "01",
+      "token": "iytxZcSakuDpGpR4aV8",
+      "image": "img_deaec71cbd1ec57d.png"
+    },
+    {
+      "number": "02",
+      "token": "rtFAMJCTyPCCZ9303ME",
+      "image": "img_1be1988cec79788d.png"
+    },
+    {
+      "number": "03",
+      "token": "2fYAxU9nmwEroXuFWBI",
+      "image": "img_d3382ce894330f9a.png"
+    },
+    {
+      "number": "04",
+      "token": "HUxnu8G6eK3nOYj2f6E",
+      "image": "img_e28559c223c3a2f8.png"
+    },
+    {
+      "number": "05",
+      "token": "73yHFIRBWgSBxGalVr0",
+      "image": "img_1fd3d1a33b9f3be3.png"
+    },
+    {
+      "number": "06",
+      "token": "k8cghnw6UOMpN1aBIFA",
+      "image": "img_5fb647b410880919.png"
+    },
+    {
+      "number": "07",
+      "token": "TErMTIWyibvugV7P5o0",
+      "image": "img_93b993ef1787e3cf.png"
+    },
+    {
+      "number": "08",
+      "token": "7UpmTxjN6YIJpsk4K5A",
+      "image": "img_cd7d4b4a6ccfb77d.png"
+    }
+  ],
+  "repo_name": "stamp-rally-8-with-sheet"
+}
