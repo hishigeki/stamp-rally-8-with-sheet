@@ -4,7 +4,7 @@ const FINISHED_KEY = "festival_stamp_rally_8_sheet_finished_stamp-rally-8-with-s
 const PARTICIPANT_KEY = "festival_stamp_rally_8_sheet_participant_id_stamp-rally-8-with-sheet";
 const INTRO_KEY = "festival_stamp_rally_8_sheet_intro_seen_stamp-rally-8-with-sheet";
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw9M1t_gYlSMkFNzoH6ICddMxx0Gpzgwn03nc8irLa4LrcQqdrdEuJ6pi156RKJKUVi1g/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxXl0LUSSwMNNtv16h0zVF22un6ECq2ecLHlCoKR9KwBYNjsOGsi5OfH2s4EhzwfOt8_g/exec";
 
 const API_TOKEN = "api_1438d5a18d8959b0b8479f6e0a5cb2f9";
 const FINISH_TOKEN = "finish_8375c30e5d902b3d7b61e3d8";
