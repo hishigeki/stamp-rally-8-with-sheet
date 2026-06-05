@@ -136,6 +136,10 @@ function checkPrize(participantId) {
     action: "checkPrize",
     participantId: participantId
   }, "handleCheckPrize");
+
+  setTimeout(() => {
+    html5QrCode.resume();
+  }, 3000);
 }
 
 function claimPrize() {
