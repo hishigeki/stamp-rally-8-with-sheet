@@ -1,13 +1,15 @@
 const STAMP_TOTAL = 8;
+
 const STORAGE_KEY = "festival_stamp_rally_8_sheet_stamps_stamp-rally-8-with-sheet";
 const FINISHED_KEY = "festival_stamp_rally_8_sheet_finished_stamp-rally-8-with-sheet";
 const PARTICIPANT_KEY = "festival_stamp_rally_8_sheet_participant_id_stamp-rally-8-with-sheet";
 const INTRO_KEY = "festival_stamp_rally_8_sheet_intro_seen_stamp-rally-8-with-sheet";
+const COMPLETE_SENT_KEY = "festival_stamp_rally_8_sheet_complete_sent_stamp-rally-8-with-sheet";
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwC-Z6w1yjNQSicoFm9pDWC5hPmMGldlzeL0ZHtAEAVI-IyhKo0_WKGcu0CAUENWEh1pw/exec";
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycbxXl0LUSSwMNNtv16h0zVF22un6ECq2ecLHlCoKR9KwBYNjsOGsi5OfH2s4EhzwfOt8_g/exec";
 
 const API_TOKEN = "api_1438d5a18d8959b0b8479f6e0a5cb2f9";
-const FINISH_TOKEN = "finish_8375c30e5d902b3d7b61e3d8";
 const RESET_TOKEN = "reset_54684587fc46e0d51ad57570";
 
 const STAMP_MAP = [
@@ -33,12 +35,13 @@ const completeArea = document.getElementById("completeArea");
 const finishedArea = document.getElementById("finishedArea");
 const participantDisplay = document.getElementById("participantDisplay");
 const participantQrArea = document.getElementById("participantQrArea");
-const claimResultText = document.getElementById("claimResultText");
 
 function showIntroOnce() {
   if (localStorage.getItem(INTRO_KEY) === "true") return;
+
   introScreen.classList.remove("hidden");
   mainScreen.classList.add("hidden");
+
   setTimeout(() => {
     localStorage.setItem(INTRO_KEY, "true");
     introScreen.classList.add("hidden");
@@ -48,47 +51,68 @@ function showIntroOnce() {
 
 function getParticipantId() {
   let id = localStorage.getItem(PARTICIPANT_KEY);
+
   if (!id) {
     id = "DX-" + crypto.randomUUID();
     localStorage.setItem(PARTICIPANT_KEY, id);
-    sendLog({action:"register", participantId:id});
   }
+
   return id;
 }
 
 function nowText() {
   const d = new Date();
-  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
 function loadStamps() {
   const raw = localStorage.getItem(STORAGE_KEY);
+
   if (!raw) return [];
+
   try {
     const data = JSON.parse(raw);
     return Array.isArray(data) ? data : [];
-  } catch(e) {
+  } catch (e) {
     return [];
   }
 }
 
 function saveStamps(stamps) {
   const map = new Map();
-  for (const item of stamps) if (!map.has(item.id)) map.set(item.id, item);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(map.values()).sort((a,b)=>a.id.localeCompare(b.id))));
+
+  for (const item of stamps) {
+    if (!map.has(item.id)) {
+      map.set(item.id, item);
+    }
+  }
+
+  const unique = Array.from(map.values())
+    .sort((a, b) => a.id.localeCompare(b.id));
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
 }
 
-function isFinished() { return localStorage.getItem(FINISHED_KEY) === "true"; }
-function setFinished() { localStorage.setItem(FINISHED_KEY, "true"); }
-function isComplete() { return loadStamps().length >= STAMP_TOTAL; }
+function isFinished() {
+  return localStorage.getItem(FINISHED_KEY) === "true";
+}
 
-function showMessage(text, type="info") {
+function isComplete() {
+  return loadStamps().length >= STAMP_TOTAL;
+}
+
+function showMessage(text, type = "info") {
   messageBox.textContent = text;
   messageBox.className = `message ${type}`;
 }
 
 function cleanUrl() {
-  window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
+  window.history.replaceState(
+    {},
+    document.title,
+    window.location.origin + window.location.pathname
+  );
 }
 
 function findStampByToken(token) {
@@ -99,8 +123,9 @@ function gasReady() {
   return GAS_URL && GAS_URL.indexOf("PASTE_GAS") === -1;
 }
 
-function sendLog(data) {
-  if (!gasReady()) return;
+function sendLogBeacon(data) {
+  if (!gasReady()) return false;
+
   const payload = {
     token: API_TOKEN,
     userAgent: navigator.userAgent,
@@ -108,27 +133,60 @@ function sendLog(data) {
     ...data
   };
 
+  const blob = new Blob(
+    [JSON.stringify(payload)],
+    { type: "text/plain;charset=utf-8" }
+  );
+
+  if (navigator.sendBeacon) {
+    return navigator.sendBeacon(GAS_URL, blob);
+  }
+
   fetch(GAS_URL, {
     method: "POST",
     mode: "no-cors",
-    headers: {"Content-Type": "text/plain;charset=utf-8"},
-    body: JSON.stringify(payload)
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify(payload),
+    keepalive: true
   }).catch(() => {});
+
+  return true;
 }
 
-function jsonp(params, callbackName) {
-  if (!gasReady()) return;
-  const url = new URL(GAS_URL);
-  for (const [key, value] of Object.entries(params)) {
-    url.searchParams.set(key, value);
-  }
-  url.searchParams.set("token", API_TOKEN);
-  url.searchParams.set("callback", callbackName);
+function sendCompleteOnce() {
+  if (!isComplete()) return;
+  if (localStorage.getItem(COMPLETE_SENT_KEY) === "true") return;
 
-  const script = document.createElement("script");
-  script.src = url.toString();
-  script.onerror = () => script.remove();
-  document.body.appendChild(script);
+  const participantId = getParticipantId();
+  const stamps = loadStamps();
+
+  const ok = sendLogBeacon({
+    action: "complete",
+    participantId: participantId,
+    stampCount: stamps.length,
+    completedAt: new Date().toISOString(),
+    stamps: JSON.stringify(stamps)
+  });
+
+  if (ok) {
+    localStorage.setItem(COMPLETE_SENT_KEY, "true");
+  }
+}
+
+function delayedSendComplete() {
+  if (!isComplete()) return;
+  if (localStorage.getItem(COMPLETE_SENT_KEY) === "true") return;
+
+  showMessage(
+    "コンプリートしました。景品交換所でこの画面を係員に見せてください。画面は閉じないでください。",
+    "success"
+  );
+
+  setTimeout(() => {
+    sendCompleteOnce();
+  }, 1000);
 }
 
 function resetByAdminQr(token) {
@@ -136,19 +194,20 @@ function resetByAdminQr(token) {
     showMessage("このリセットQRは無効です。", "warning");
     return;
   }
+
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(FINISHED_KEY);
   localStorage.removeItem(PARTICIPANT_KEY);
   localStorage.removeItem(INTRO_KEY);
+  localStorage.removeItem(COMPLETE_SENT_KEY);
+
   showMessage("管理者QRにより台紙をリセットしました。", "success");
 }
 
 function handleUrlAction() {
   const params = new URLSearchParams(window.location.search);
   const stampToken = params.get("s");
-  const finish = params.get("finish");
   const reset = params.get("reset");
-  const participantId = getParticipantId();
 
   if (reset) {
     resetByAdminQr(reset);
@@ -157,38 +216,10 @@ function handleUrlAction() {
     return;
   }
 
-  if (finish === FINISH_TOKEN) {
-    if (!isComplete()) {
-      showMessage("まだコンプリートしていません。景品交換はできません。", "warning");
-      sendLog({action:"claimAttempt", participantId, result:"NOT_COMPLETE", stampCount:loadStamps().length});
-      cleanUrl();
-      return;
-    }
-
-    window.handlePrizeResult = function(res) {
-      if (res && res.result === "OK") {
-        setFinished();
-        showMessage("景品受け取り済みにしました。ご参加ありがとうございました。", "success");
-        claimResultText.textContent = "景品交換を記録しました。";
-      } else if (res && res.result === "DUPLICATE") {
-        setFinished();
-        showMessage("この参加者IDはすでに景品交換済みです。", "warning");
-        claimResultText.textContent = "すでに交換済みとして記録されています。";
-      } else {
-        showMessage("景品交換の確認に失敗しました。係員に確認してください。", "error");
-      }
-      renderBoard();
-    };
-
-    jsonp({action:"claimPrize", participantId, stampCount:loadStamps().length}, "handlePrizeResult");
-
-    cleanUrl();
-    return;
-  }
-
   if (!stampToken) return;
 
   const info = findStampByToken(stampToken);
+
   if (!info) {
     showMessage("このQRコードはスタンプラリー用ではありません。", "warning");
     cleanUrl();
@@ -207,28 +238,13 @@ function handleUrlAction() {
   if (stamps.some(item => item.id === id)) {
     showMessage(`${id}番のスタンプは取得済みです。`, "warning");
   } else {
-    const item = {id:id, time:nowText()};
-    stamps.push(item);
-    saveStamps(stamps);
-    showMessage(`${id}番のスタンプを取得しました！`, "success");
-
-    sendLog({
-      action:"stamp",
-      participantId,
-      stampNumber:id,
-      stampOrder:stamps.length,
-      stampTime:item.time,
-      stampCount:stamps.length
+    stamps.push({
+      id: id,
+      time: nowText()
     });
 
-    if (stamps.length >= STAMP_TOTAL) {
-      sendLog({
-        action:"complete",
-        participantId,
-        stampCount:stamps.length,
-        completedAt:new Date().toISOString()
-      });
-    }
+    saveStamps(stamps);
+    showMessage(`${id}番のスタンプを取得しました！`, "success");
   }
 
   cleanUrl();
@@ -241,7 +257,7 @@ function showParticipantQr(participantId) {
 
   participantQrArea.innerHTML = `
     <p>景品交換用QR</p>
-    <img src="${qrUrl}" width="180" height="180">
+    <img src="${qrUrl}" width="180" height="180" alt="景品交換用QR">
     <p>${participantId}</p>
   `;
 }
@@ -250,6 +266,7 @@ function renderBoard() {
   const stamps = loadStamps();
   const finished = isFinished();
   const participantId = getParticipantId();
+
   participantDisplay.textContent = "参加者ID：" + participantId;
   stampBoard.innerHTML = "";
 
@@ -258,6 +275,7 @@ function renderBoard() {
     const slot = document.createElement("div");
     slot.className = "stamp-slot";
     slot.dataset.number = id;
+
     const stamp = stamps.find(s => s.id === id);
 
     if (stamp) {
@@ -274,10 +292,12 @@ function renderBoard() {
     } else {
       slot.classList.add("empty");
     }
+
     stampBoard.appendChild(slot);
   }
 
   const count = stamps.length;
+
   countText.textContent = `${count} / ${STAMP_TOTAL}`;
   progressBar.style.width = `${(count / STAMP_TOTAL) * 100}%`;
 
@@ -285,32 +305,60 @@ function renderBoard() {
     completeText.textContent = "終了";
     completeArea.classList.add("hidden");
     finishedArea.classList.remove("hidden");
-    if (participantQrArea) participantQrArea.innerHTML = "";
+
+    if (participantQrArea) {
+      participantQrArea.innerHTML = "";
+    }
+
   } else if (count >= STAMP_TOTAL) {
     completeText.textContent = "コンプリート";
     completeArea.classList.remove("hidden");
     finishedArea.classList.add("hidden");
+
     showParticipantQr(participantId);
+
+    showMessage(
+      "コンプリートしました。景品交換所でこの画面を係員に見せてください。画面は閉じないでください。",
+      "success"
+    );
+
+    setTimeout(() => {
+      sendCompleteOnce();
+    }, 1000);
+
   } else {
     completeText.textContent = `あと ${STAMP_TOTAL - count} 個`;
     completeArea.classList.add("hidden");
     finishedArea.classList.add("hidden");
-    if (participantQrArea) participantQrArea.innerHTML = "";
+
+    if (participantQrArea) {
+      participantQrArea.innerHTML = "";
+    }
   }
 }
 
 function loadMessages() {
   if (!gasReady()) return;
+
   window.handleMessages = function(res) {
     if (!res || !res.messages || res.messages.length === 0) {
       noticeBox.classList.add("hidden");
       return;
     }
+
     const msg = res.messages[0];
     noticeBox.innerHTML = `<strong>${msg.title}</strong><br>${msg.body}`;
     noticeBox.classList.remove("hidden");
   };
-  jsonp({action:"getMessages"}, "handleMessages");
+
+  const url = new URL(GAS_URL);
+  url.searchParams.set("action", "getMessages");
+  url.searchParams.set("token", API_TOKEN);
+  url.searchParams.set("callback", "handleMessages");
+
+  const script = document.createElement("script");
+  script.src = url.toString();
+  document.body.appendChild(script);
 }
 
 showIntroOnce();
