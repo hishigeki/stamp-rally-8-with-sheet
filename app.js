@@ -361,8 +361,9 @@ function loadMessages() {
   document.body.appendChild(script);
 }
 
-showIntroOnce();
+getParticipantId();
 handleUrlAction();
 renderBoard();
+showIntroOnce();
 loadMessages();
 setInterval(loadMessages, 60000);
