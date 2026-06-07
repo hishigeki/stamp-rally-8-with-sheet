@@ -7,7 +7,7 @@ const INTRO_KEY = "festival_stamp_rally_8_sheet_intro_seen_stamp-rally-8-with-sh
 const COMPLETE_SENT_KEY = "festival_stamp_rally_8_sheet_complete_sent_stamp-rally-8-with-sheet";
 
 const GAS_URL =
-"https://script.google.com/macros/s/AKfycbxXl0LUSSwMNNtv16h0zVF22un6ECq2ecLHlCoKR9KwBYNjsOGsi5OfH2s4EhzwfOt8_g/exec";
+"https://script.google.com/macros/s/AKfycbzfduTsOl5TIlOUYcYxkKdWewy_4gAYL2tsRzO4XYi9xNWabrofhcsQz_HKOs1XlPtD7Q/exec";
 
 const API_TOKEN = "api_1438d5a18d8959b0b8479f6e0a5cb2f9";
 const RESET_TOKEN = "reset_54684587fc46e0d51ad57570";
