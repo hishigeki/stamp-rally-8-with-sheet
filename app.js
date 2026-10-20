@@ -38,6 +38,8 @@ const participantDisplay = $("participantDisplay"), participantQrArea = $("parti
 
 // 抽選の状態('open' | 'closed' | 'unknown')。サーバーから取得できるまで unknown=受付中扱い
 let lotteryOpen = true;
+let queueInfo = null;     // {no, state, lane}(景品所のQRを読んで順番待ちに入った人)
+let queueMsg = "";
 let qrShownFor = "";
 
 function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -147,6 +149,54 @@ function pollStatus() {
   document.body.appendChild(script);
 }
 
+// 汎用のJSONP呼び出し(公開トークンで許可された action だけ)
+function gasGet(params, cb) {
+  if (!gasReady()) { cb(null); return; }
+  const name = "__g" + (++pollSeq);
+  const script = document.createElement("script");
+  let fin = false;
+  const done = r => { if (fin) return; fin = true; try { delete window[name]; } catch (e) { window[name] = undefined; } script.remove(); cb(r); };
+  const timer = setTimeout(() => done(null), 15000);
+  window[name] = r => { clearTimeout(timer); done(r); };
+  script.onerror = () => { clearTimeout(timer); done(null); };
+  const url = new URL(GAS_URL);
+  Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+  url.searchParams.set("token", API_TOKEN);
+  url.searchParams.set("callback", name);
+  script.src = url.toString();
+  document.body.appendChild(script);
+}
+
+// 景品所のQR(?lottery=1)を読んだ → くじの順番待ちに入る
+const ENTER_MSG = {
+  CLOSED: "本日のくじの受付は終了しました。",
+  DUPLICATE: "景品はすでに受け取り済みです。",
+  NOT_COMPLETE: "まだ12個そろっていません。スタンプを集めてからもう一度どうぞ。",
+  UNKNOWN_ID: "記録がまだ届いていません。少し待ってから、もう一度QRを読み取ってください。"
+};
+function enterLottery() {
+  if (isFinished()) { showMessage("この台紙は景品受け取り済みです。", "warning"); return; }
+  if (loadStamps().length < STAMP_TOTAL) { showMessage("まだ12個そろっていません。この端末の台紙でスタンプを集めてから、もう一度QRを読み取ってください。", "warning"); return; }
+  sendComplete();                                   // 念のため、コンプリートを先に送る
+  queueMsg = "順番待ちに入っています…";
+  renderBoard();
+  const attempt = n => gasGet({ action: "enter", participantId: getParticipantId() }, res => {
+    if (!res && n < 3) { setTimeout(() => attempt(n + 1), 2500); return; }       // 通信エラー → 数回やり直す
+    if (res && res.ok && res.result === "OK") {
+      queueInfo = { no: res.no, state: "waiting", lane: 0 };
+      queueMsg = "";
+      showMessage(`くじの順番待ちに入りました。受付番号は ${res.no} 番です。`, "success");
+    } else if (res && res.result === "UNKNOWN_ID" && n < 3) {
+      sendComplete(); setTimeout(() => attempt(n + 1), 3000); return;
+    } else {
+      queueMsg = (res && ENTER_MSG[res.result]) || "通信できませんでした。電波のよい場所でもう一度QRを読み取るか、係員に声をかけてください。";
+    }
+    renderBoard();
+    setTimeout(pollStatus, 3000);
+  });
+  attempt(0);
+}
+
 function applyStatus(res) {
   if (!res || res.ok !== true) return;
   // お知らせ(textContent で表示)
@@ -165,9 +215,12 @@ function applyStatus(res) {
   if (me) {
     if (me.claimed) store(FINISHED_KEY, "true");
     if (me.completed) store(SYNCED_KEY, "true");
+    queueInfo = me.queue && !me.claimed ? me.queue : null;
+    if (queueInfo) queueMsg = "";
     else if (isComplete()) { drop(SYNCED_KEY); sendComplete(); }   // 届いていなければ再送
   }
   renderBoard();
+  if (queueInfo && !queueInfo.lane) setTimeout(pollStatus, 3500 + Math.random() * 1500);   // 順番(レーン)が決まるまで短い間隔で確認
 }
 
 function schedulePoll() {
@@ -186,6 +239,7 @@ function resetByAdminQr(token) {
 function handleUrlAction() {
   const params = new URLSearchParams(location.search);
   const stampToken = params.get("s"), reset = params.get("reset");
+  if (params.get("lottery")) { cleanUrl(); wantEnter = true; return; }
   if (reset) { resetByAdminQr(reset); cleanUrl(); return; }
   if (!stampToken) return;
   const info = STAMP_MAP.find(i => i.token === stampToken);
@@ -204,6 +258,7 @@ function handleUrlAction() {
   sendRegister();
 }
 let lastNew = "";
+let wantEnter = false;
 
 // ---------- 描画 ----------
 function showParticipantQr(pid) {
@@ -258,6 +313,7 @@ function renderBoard() {
   closedArea.classList.add("hidden");
   finishedArea.classList.add("hidden");
 
+  renderQueue();
   if (finished) {
     completeText.textContent = "受け取り済み";
     finishedArea.classList.remove("hidden");
@@ -266,7 +322,7 @@ function renderBoard() {
       completeText.textContent = "コンプリート!";
       completeArea.classList.remove("hidden");
       showParticipantQr(pid);
-      showMessage("コンプリートしました。景品交換所でこの画面を係員に見せてください。画面は閉じないでください。", "success");
+      if (!queueInfo && !queueMsg) showMessage("コンプリートしました。景品所に貼ってあるQRコードをスマホのカメラで読み取ると、くじの順番待ちに入れます。", "success");
       sendComplete();
     } else {
       completeText.textContent = "コンプリート!";
@@ -279,9 +335,40 @@ function renderBoard() {
   }
 }
 
+// ---------- くじの順番待ち表示 ----------
+function renderQueue() {
+  const box = $("queueArea");
+  if (!box) return;
+  box.textContent = "";
+  const q = queueInfo;
+  if (isFinished() || (!q && !queueMsg) || loadStamps().length < STAMP_TOTAL) { box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  const h = document.createElement("h2"); h.textContent = "くじの順番待ち";
+  box.appendChild(h);
+  if (q) {
+    const n = document.createElement("p"); n.className = "queue-no"; n.textContent = "受付番号 " + q.no;
+    const m = document.createElement("p");
+    if (q.lane) {
+      m.textContent = "くじ引き機 " + (q.lane === 1 ? "①(スペースキー)" : "②(マウスクリック)") + " の列にお並びください。画面に受付番号が出たら、あなたの番です。";
+    } else {
+      m.textContent = "順番を割り当てています。少しお待ちください…";
+    }
+    box.append(n, m);
+    if (q.state === "taken") {
+      const b = document.createElement("button"); b.type = "button"; b.className = "queue-again";
+      b.textContent = "列から外れてしまったときは、ここを押してもう一度並ぶ";
+      b.addEventListener("click", () => { queueInfo = null; enterLottery(); });
+      box.appendChild(b);
+    }
+  } else {
+    const m = document.createElement("p"); m.textContent = queueMsg; box.appendChild(m);
+  }
+}
+
 getParticipantId();
 handleUrlAction();
 renderBoard();
+if (wantEnter) enterLottery();
 showIntroOnce();
 setTimeout(pollStatus, 300 + Math.random() * 1200);
 schedulePoll();
