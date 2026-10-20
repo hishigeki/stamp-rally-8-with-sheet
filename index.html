@@ -28,7 +28,7 @@
 
     <section class="progress-card">
       <div class="progress-text">
-        <span id="countText">0 / 8</span>
+        <span id="countText">0 / 12</span>
         <span id="completeText">スタンプを集めよう</span>
       </div>
       <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
@@ -38,23 +38,30 @@
 
     <section id="completeArea" class="complete-area hidden">
       <h2>🎉 コンプリート！ 🎉</h2>
-      <p>景品交換所の201号室でこの画面を見せてください。</p>
+      <p id="completeLead">景品交換所の201号室でこの画面を見せてください。</p>
       <p id="participantDisplay" class="participant"></p>
       <div id="participantQrArea" class="participant-qr"></div>
-      <p class="note">景品交換所で、このQRコードを係員に見せてください。</p>
+      <p id="completeNote" class="note">景品交換所で、このQRコードを係員に見せてください。</p>
+    </section>
+
+    <section id="closedArea" class="closed-area hidden">
+      <h2>🎉 コンプリート！ 🎉</h2>
+      <p><strong>景品の抽選は終了しました。</strong></p>
+      <p>ご参加ありがとうございました。</p>
     </section>
 
     <section id="finishedArea" class="finished-area hidden">
       <h2>景品受け取り済み</h2>
-      <p id="claimResultText">ご参加ありがとうございました。</p>
+      <p>ご参加ありがとうございました。</p>
     </section>
 
     <details class="rule-box">
       <summary>ルールをみる</summary>
       <p>QRコードをよんで、スタンプをあつめます。</p>
-      <p>8こあつめたら、201号室でけいひんとこうかんできます。</p>
+      <p>12こあつめたら、201号室でけいひんとこうかんできます。</p>
       <p>なまえ、じゅうしょ、でんわばんごう、メールアドレスはあつめません。</p>
       <p>スタンプをよんだじかんと、スタンプばんごうだけをきろくします。</p>
+      <p>この画面はとじてもだいじょうぶです。でも、ブラウザのきろくをけすと、スタンプもきえます。</p>
     </details>
 
     <footer class="footer">
@@ -62,6 +69,7 @@
     </footer>
   </section>
 </main>
+<script src="vendor/qrcode.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
