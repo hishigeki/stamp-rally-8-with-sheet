@@ -183,7 +183,7 @@ function enterLottery() {
   const attempt = n => gasGet({ action: "enter", participantId: getParticipantId() }, res => {
     if (!res && n < 3) { setTimeout(() => attempt(n + 1), 2500); return; }       // 通信エラー → 数回やり直す
     if (res && res.ok && res.result === "OK") {
-      queueInfo = { no: res.no, state: "waiting", lane: 0 };
+      queueInfo = { no: res.no, state: "waiting", lane: 0, ahead: res.ahead || 0 };
       queueMsg = "";
       showMessage(`くじの順番待ちに入りました。受付番号は ${res.no} 番です。`, "success");
     } else if (res && res.result === "UNKNOWN_ID" && n < 3) {
@@ -220,7 +220,7 @@ function applyStatus(res) {
     else if (isComplete()) { drop(SYNCED_KEY); sendComplete(); }   // 届いていなければ再送
   }
   renderBoard();
-  if (queueInfo && !queueInfo.lane) setTimeout(pollStatus, 3500 + Math.random() * 1500);   // 順番(レーン)が決まるまで短い間隔で確認
+  if (queueInfo && !queueInfo.lane) setTimeout(pollStatus, (queueInfo.state === "waiting" ? 8000 : 3500) + Math.random() * 2000);   // 順番(レーン)が決まるまで短い間隔で確認
 }
 
 function schedulePoll() {
@@ -349,7 +349,11 @@ function renderQueue() {
     const n = document.createElement("p"); n.className = "queue-no"; n.textContent = "受付番号 " + q.no;
     const m = document.createElement("p");
     if (q.lane) {
-      m.textContent = "くじ引き機 " + (q.lane === 1 ? "①(スペースキー)" : "②(マウスクリック)") + " の列にお並びください。画面に受付番号が出たら、あなたの番です。";
+      m.textContent = "会場に入って、くじ引き機 " + (q.lane === 1 ? "①(スペースキー・青)" : "②(マウスクリック・オレンジ)") + " の列にお並びください。画面に受付番号が出たら、あなたの番です。";
+    } else if (q.state === "waiting" && q.ahead > 0) {
+      m.textContent = "いま会場がいっぱいです。会場の外で、2列に並んでお待ちください。あなたの前に " + q.ahead + " 人います。順番になるとこの画面が変わります。";
+    } else if (q.state === "waiting") {
+      m.textContent = "もうすぐ会場に入れます。会場の入口の近くでお待ちください。";
     } else {
       m.textContent = "順番を割り当てています。少しお待ちください…";
     }

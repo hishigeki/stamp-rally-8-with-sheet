@@ -50,3 +50,9 @@ summary{cursor:pointer;color:var(--pink)}
 .queue-area h2{margin:0 0 8px}
 .queue-no{font-size:2.2rem;font-weight:800;margin:6px 0}
 .queue-again{margin-top:10px;padding:10px 14px;border:0;border-radius:12px;background:#eee;font-size:.9rem}
+
+.visit-box{margin-top:14px;padding:14px;background:#fff8e1;border:2px dashed #e8a100;border-radius:14px;text-align:center;line-height:1.6}
+.visit-box p{margin:2px 0}
+.visit-title{font-size:.85rem;color:#8a5a00;font-weight:700}
+.visit-place{font-size:1.25rem;font-weight:800}
+.visit-time{font-size:1.15rem;color:#c2185b}
