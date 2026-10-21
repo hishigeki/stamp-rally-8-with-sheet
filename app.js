@@ -51,11 +51,12 @@ function showIntroOnce() {
   if (load(INTRO_KEY) === "true") return;
   introScreen.classList.remove("hidden");
   mainScreen.classList.add("hidden");
-  setTimeout(() => {
+  $("introStart").addEventListener("click", () => {
     store(INTRO_KEY, "true");
     introScreen.classList.add("hidden");
     mainScreen.classList.remove("hidden");
-  }, 2500);
+    window.scrollTo(0, 0);
+  });
 }
 
 function uuid() {
@@ -243,20 +244,26 @@ function handleUrlAction() {
   if (params.get("lottery")) { cleanUrl(); wantEnter = true; return; }
   if (reset) { resetByAdminQr(reset); cleanUrl(); return; }
   if (!stampToken) return;
-  const info = STAMP_MAP.find(i => i.token === stampToken);
   cleanUrl();
-  if (!info) { showMessage("このQRコードはスタンプラリー用ではありません。", "warning"); return; }
-  if (isFinished()) { showMessage("この台紙は景品受け取り済みです。", "warning"); return; }
+  acquireStamp(stampToken);
+}
+
+// スタンプを1つ取る(URLから来た場合も、ページ内カメラで読んだ場合も同じ処理)
+function acquireStamp(token) {
+  const info = STAMP_MAP.find(i => i.token === token);
+  if (!info) { showMessage("このQRコードはスタンプラリー用ではありません。", "warning"); return { status: "invalid" }; }
+  if (isFinished()) { showMessage("この台紙は景品受け取り済みです。", "warning"); return { status: "finished" }; }
   const stamps = loadStamps();
   if (stamps.some(s => s.id === info.number)) {
     showMessage(`${info.number}番のスタンプは取得済みです。`, "warning");
-    return;
+    return { status: "dup", number: info.number };
   }
   stamps.push({ id: info.number, time: nowText() });
   saveStamps(stamps);
   lastNew = info.number;
   showMessage(`${info.number}番のスタンプを取得しました!`, "success");
   sendRegister();
+  return { status: "new", number: info.number };
 }
 let lastNew = "";
 let wantEnter = false;
@@ -375,7 +382,7 @@ function resetIfNewDay() {
   const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
   if (load(DAY_KEY) === today) return;
   const hadData = !!(load(STORAGE_KEY) || load(PARTICIPANT_KEY));
-  [STORAGE_KEY, FINISHED_KEY, PARTICIPANT_KEY, SYNCED_KEY, "festival_reg_" + SUFFIX].forEach(drop);
+  [STORAGE_KEY, FINISHED_KEY, PARTICIPANT_KEY, SYNCED_KEY, INTRO_KEY, "festival_reg_" + SUFFIX].forEach(drop);   // あそびかたも、もう一度出す
   store(DAY_KEY, today);
   if (hadData) showMessage("新しい日になったので、台紙を最初からにしました。", "info");
 }

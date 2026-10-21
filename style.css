@@ -5,7 +5,7 @@ body{margin:0;font-family:system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sa
 .app{width:min(100%,520px);margin:0 auto;padding:14px}
 .hidden{display:none!important}
 
-.intro{min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:bold;color:var(--pink)}
+.intro{min-height:90vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-weight:bold;color:var(--pink);padding:8px 4px}
 .intro h1{font-size:1.8rem}
 .intro p{font-size:1.25rem;line-height:1.7}
 
@@ -56,3 +56,8 @@ summary{cursor:pointer;color:var(--pink)}
 .visit-title{font-size:.85rem;color:#8a5a00;font-weight:700}
 .visit-place{font-size:1.25rem;font-weight:800}
 .visit-time{font-size:1.15rem;color:#c2185b}
+
+.howto{text-align:left;font-size:1.02rem;line-height:1.65;color:#333;max-width:420px;padding-left:1.4em;margin:6px 0}
+.howto li{margin-bottom:10px}
+.intro-small{font-size:.9rem!important;color:#666;font-weight:600}
+.start-btn{margin-top:10px;padding:16px 56px;font-size:1.3rem;font-weight:800;color:#fff;background:var(--pink);border:0;border-radius:40px}
