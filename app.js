@@ -5,6 +5,7 @@ const STORAGE_KEY = "festival_stamps_" + SUFFIX;
 const FINISHED_KEY = "festival_finished_" + SUFFIX;
 const PARTICIPANT_KEY = "festival_pid_" + SUFFIX;
 const INTRO_KEY = "festival_intro_" + SUFFIX;
+const DAY_KEY = "festival_day_" + SUFFIX;       // 台紙を作った日(日本時間)。日が変わったら台紙を最初からにする
 const SYNCED_KEY = "festival_synced_" + SUFFIX;   // サーバーが「コンプリート」を受け取ったことを確認できたら true
 
 const GAS_URL =
@@ -369,6 +370,16 @@ function renderQueue() {
   }
 }
 
+// 日が変わっていたら(前日までの台紙が残っていたら)、スタンプ・コンプリート・参加者IDを消して最初から始める
+function resetIfNewDay() {
+  const today = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  if (load(DAY_KEY) === today) return;
+  const hadData = !!(load(STORAGE_KEY) || load(PARTICIPANT_KEY));
+  [STORAGE_KEY, FINISHED_KEY, PARTICIPANT_KEY, SYNCED_KEY, "festival_reg_" + SUFFIX].forEach(drop);
+  store(DAY_KEY, today);
+  if (hadData) showMessage("新しい日になったので、台紙を最初からにしました。", "info");
+}
+resetIfNewDay();
 getParticipantId();
 handleUrlAction();
 renderBoard();
