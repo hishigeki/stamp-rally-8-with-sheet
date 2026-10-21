@@ -13,6 +13,8 @@ const GAS_URL =
 
 // 参加者画面用の公開トークン(register / complete / status だけ許可。景品の交換はできません)
 const API_TOKEN = "api_1438d5a18d8959b0b8479f6e0a5cb2f9";
+// 景品所に貼る「13番」のQR。スタンプの絵は出さず、読むと(12個そろっていれば)くじの順番待ちに入る
+const VENUE_TOKEN = "ZA0fWrLOAwbr1MzWscg";
 const RESET_TOKEN = "reset_54684587fc46e0d51ad57570";
 
 const STAMP_MAP = [
@@ -178,7 +180,7 @@ const ENTER_MSG = {
 };
 function enterLottery() {
   if (isFinished()) { showMessage("この台紙は景品受け取り済みです。", "warning"); return; }
-  if (loadStamps().length < STAMP_TOTAL) { showMessage("まだ12個そろっていません。この端末の台紙でスタンプを集めてから、もう一度QRを読み取ってください。", "warning"); return; }
+  if (loadStamps().length < STAMP_TOTAL) { showMessage("まだ12個そろっていません。1〜12番のスタンプを集めてから、景品所の「13番」のQRを読み取ってください。", "warning"); return; }
   sendComplete();                                   // 念のため、コンプリートを先に送る
   queueMsg = "順番待ちに入っています…";
   renderBoard();
@@ -241,9 +243,9 @@ function resetByAdminQr(token) {
 function handleUrlAction() {
   const params = new URLSearchParams(location.search);
   const stampToken = params.get("s"), reset = params.get("reset");
-  if (params.get("lottery")) { cleanUrl(); wantEnter = true; return; }
   if (reset) { resetByAdminQr(reset); cleanUrl(); return; }
   if (!stampToken) return;
+  if (stampToken === VENUE_TOKEN) { cleanUrl(); wantEnter = true; return; }
   cleanUrl();
   acquireStamp(stampToken);
 }
@@ -330,7 +332,7 @@ function renderBoard() {
       completeText.textContent = "コンプリート!";
       completeArea.classList.remove("hidden");
       showParticipantQr(pid);
-      if (!queueInfo && !queueMsg) showMessage("コンプリートしました。景品所に貼ってあるQRコードをスマホのカメラで読み取ると、くじの順番待ちに入れます。", "success");
+      if (!queueInfo && !queueMsg) showMessage("コンプリートしました。景品所の「13番」のQRコードをスマホのカメラで読み取ると、くじの順番待ちに入れます。", "success");
       sendComplete();
     } else {
       completeText.textContent = "コンプリート!";
@@ -357,7 +359,8 @@ function renderQueue() {
     const n = document.createElement("p"); n.className = "queue-no"; n.textContent = "受付番号 " + q.no;
     const m = document.createElement("p");
     if (q.lane) {
-      m.textContent = "会場に入って、くじ引き機 " + (q.lane === 1 ? "①(スペースキー・青)" : "②(マウスクリック・オレンジ)") + " の列にお並びください。画面に受付番号が出たら、あなたの番です。";
+      m.textContent = q.lane === 9 ? "会場に入って、くじ引き機の列にお並びください。画面に受付番号が出たら、あなたの番です。"
+        : "会場に入って、くじ引き機 " + (q.lane === 1 ? "①(スペースキー・青)" : "②(マウスクリック・オレンジ)") + " の列にお並びください。画面に受付番号が出たら、あなたの番です。";
     } else if (q.state === "waiting" && q.ahead > 0) {
       m.textContent = "いま会場がいっぱいです。会場の外で、2列に並んでお待ちください。あなたの前に " + q.ahead + " 人います。順番になるとこの画面が変わります。";
     } else if (q.state === "waiting") {
