@@ -3,31 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>学園祭スタンプラリー</title>
+  <title>カギフェス2026 スタンプラリー</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main class="app">
   <section id="introScreen" class="intro hidden">
-    <h1>すたんぷらりーへようこそ</h1>
+    <h1>スタンプラリーへ ようこそ!</h1>
     <ol class="howto">
-      <li><b>スタンプのQRコード</b>を、スマホのカメラでよみます。<br>(ぜんぶで12か所)</li>
-      <li>1か所よむたびに、すたんぷが1つふえます。<br>つぎのQRも、おなじようにカメラでよみます。</li>
-      <li><b>12こ あつまったら コンプリート!</b><br>そのあと、けいひんじょの「13ばん」のQRもよむと、くじのじゅんばんまちに はいれます。</li>
-      <li>しょうわちょうこうしゃ 2F じむしょまえで、くじをひいて けいひんをもらいます。<br><b>おそくとも 14:50 までに</b>きてください。</li>
+      <li><b>スタンプの QRコード</b>を、スマホの カメラで よみとります。<br>(ぜんぶで 12か所)</li>
+      <li>よみとると、スタンプが 1こ ふえます。<br>つぎの QRコードも、おなじように よみとります。</li>
+      <li><b>12こ あつまったら 「コンプリート!」</b><br>画面に QRコードが 出ます。この 画面は 消さないでね。</li>
+      <li>景品引換所の 「13番」の QRコードを よみとると、くじの 順番まちに 入れます。<br>よめない ときは、画面の QRコードを 係の 人に 見せてください。</li>
+      <li>しょうわちょうこうしゃ 2F じむしょまえで、くじを ひいて 景品を もらいます。<br><b>おそくても 14:50 までに</b> 来てね。</li>
     </ol>
-    <p class="intro-small">なまえやでんわばんごうは あつめません。<br>この画面はとじても だいじょうぶです。</p>
+    <p class="intro-small">名前や 電話番号は あつめません。<br>この 画面は 閉じても だいじょうぶです。</p>
     <button id="introStart" class="start-btn" type="button">はじめる</button>
   </section>
 
   <section id="mainScreen">
     <header>
-      <p class="eyebrow">学園祭</p>
-      <h1>Webスタンプラリー</h1>
+      <p class="eyebrow">カギフェス2026</p>
+      <h1>スタンプラリー</h1>
     </header>
 
     <section id="messageBox" class="message info">
-      QRコードを読み取ると、ここにスタンプが集まります。
+      QRコードを よみとると、ここに スタンプが たまります。
     </section>
 
     <section id="noticeBox" class="notice hidden"></section>
@@ -35,7 +36,7 @@
     <section class="progress-card">
       <div class="progress-text">
         <span id="countText">0 / 12</span>
-        <span id="completeText">スタンプを集めよう</span>
+        <span id="completeText">スタンプを あつめよう</span>
       </div>
       <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
     </section>
@@ -45,42 +46,42 @@
     <section id="queueArea" class="queue-area hidden"></section>
 
     <section id="completeArea" class="complete-area hidden">
-      <h2>🎉 コンプリート！ 🎉</h2>
-      <p id="completeLead">しょうわちょうこうしゃ 2F じむしょまえへ、14:50までにきてください。</p>
+      <h2>🎉 コンプリート! 🎉</h2>
+      <p id="completeLead">しょうわちょうこうしゃ 2F じむしょまえへ、14:50までに 来てね。</p>
       <p id="participantDisplay" class="participant"></p>
       <div id="participantQrArea" class="participant-qr"></div>
-      <p id="completeNote" class="note">景品所の「13番」のQRコードを読み取ると順番待ちに入れます。うまくいかないときは、このQRコードを係員に見せてください。</p>
+      <p id="completeNote" class="note">景品引換所の 「13番」の QRコードを よみとると、くじの 順番まちに 入れます。よめない ときは、この QRコードを 係の 人に 見せてください。</p>
       <div class="visit-box">
-        <p class="visit-title">けいひんこうかんじょ</p>
+        <p class="visit-title">景品引換所</p>
         <p class="visit-place">しょうわちょうこうしゃ<br>2F じむしょまえ</p>
-        <p>こんざつをさけるため、<strong>じかんをまもってください。</strong></p>
-        <p>くじで、けいひんがきまります。</p>
-        <p class="visit-time"><strong>おそくとも 14:50 までに</strong> きてください。</p>
+        <p>こんざつを さけるため、<strong>時間を まもってください。</strong></p>
+        <p>くじで 景品が きまります。景品が なくなったら おわりです。</p>
+        <p class="visit-time"><strong>おそくても 14:50 までに</strong> 来てね。</p>
       </div>
     </section>
 
     <section id="closedArea" class="closed-area hidden">
-      <h2>🎉 コンプリート！ 🎉</h2>
-      <p><strong>景品の抽選は終了しました。</strong></p>
-      <p>ご参加ありがとうございました。</p>
+      <h2>🎉 コンプリート! 🎉</h2>
+      <p><strong>くじは おわりました。</strong></p>
+      <p>ありがとうございました!</p>
     </section>
 
     <section id="finishedArea" class="finished-area hidden">
-      <h2>景品受け取り済み</h2>
-      <p>ご参加ありがとうございました。</p>
+      <h2>くじは もう ひきました</h2>
+      <p>ありがとうございました!</p>
     </section>
 
     <details class="rule-box">
-      <summary>ルールをみる</summary>
-      <p>QRコードをよんで、スタンプをあつめます。</p>
-      <p>12こあつめたら、しょうわちょうこうしゃ 2F じむしょまえで、くじをひいて けいひんをもらえます。おそくとも 14:50 までにきてください。</p>
-      <p>なまえ、じゅうしょ、でんわばんごう、メールアドレスはあつめません。</p>
-      <p>スタンプをよんだじかんと、スタンプばんごうだけをきろくします。</p>
-      <p>この画面はとじてもだいじょうぶです。でも、ブラウザのきろくをけすと、スタンプもきえます。</p>
+      <summary>やりかたを 見る</summary>
+      <p>QRコードを よみとって、スタンプを あつめます。</p>
+      <p>12こ あつめたら、しょうわちょうこうしゃ 2F じむしょまえで、くじを ひいて 景品を もらえます。おそくても 14:50 までに 来てね。</p>
+      <p>名前、住所、電話番号、メールアドレスは あつめません。</p>
+      <p>スタンプを よみとった 時間と、スタンプの 番号だけを きろくします。</p>
+      <p>この 画面は 閉じても だいじょうぶです。でも、ブラウザの 履歴を 消すと、スタンプも 消えます。</p>
     </details>
 
     <footer class="footer">
-      <p>スタンプ取得状況は学園祭運営の改善のために記録します。</p>
+      <p>スタンプを あつめた じょうきょうは、学園祭を よくするために きろくします。</p>
     </footer>
   </section>
 </main>
