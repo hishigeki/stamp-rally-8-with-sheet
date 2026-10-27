@@ -134,44 +134,57 @@ function sendRegister() {
   }
 }
 
-// ---------- 状態の取得(JSONP。1回で お知らせ+抽選受付+自分の状態 を取る) ----------
+// ---------- GASとの通信 ----------
+// 1) fetch で、Googleのログイン情報(Cookie)を付けずに呼ぶ。スマホに複数のGoogleアカウントが入っていても、
+//    「現在、ファイルを開くことができません」にならない。
+// 2) だめなら、従来の JSONP(scriptタグ)でやり直す。
 let pollSeq = 0, polling = false;
-function pollStatus() {
-  if (!gasReady() || polling || document.hidden) return;
-  polling = true;
-  const name = "__st" + (++pollSeq) + "_" + Math.floor(Math.random() * 1e6);
-  const script = document.createElement("script");
-  const done = () => { polling = false; try { delete window[name]; } catch (e) { window[name] = undefined; } script.remove(); };
-  const timer = setTimeout(done, 15000);
-  window[name] = res => { clearTimeout(timer); done(); applyStatus(res); };
-  script.onerror = () => { clearTimeout(timer); done(); };
-  const url = new URL(GAS_URL);
-  url.searchParams.set("action", "status");
-  url.searchParams.set("token", API_TOKEN);
-  url.searchParams.set("callback", name);
-  url.searchParams.set("_", Date.now() + "" + Math.floor(Math.random() * 1000));   // キャッシュ対策
-  if (isComplete()) url.searchParams.set("participantId", getParticipantId());
-  script.src = url.toString();
-  document.body.appendChild(script);
-}
-
-// 汎用のJSONP呼び出し(公開トークンで許可された action だけ)
 function gasGet(params, cb) {
-  if (!gasReady()) { cb(null); return; }
-  const name = "__g" + (++pollSeq) + "_" + Math.floor(Math.random() * 1e6);
-  const script = document.createElement("script");
-  let fin = false;
-  const done = (r, why) => { if (fin) return; fin = true; try { delete window[name]; } catch (e) { window[name] = undefined; } script.remove(); cb(r, why); };
-  const timer = setTimeout(() => done(null, "timeout"), 15000);
-  window[name] = r => { clearTimeout(timer); done(r); };
-  script.onerror = () => { clearTimeout(timer); done(null, "onerror"); };
+  if (!gasReady()) { cb(null, "no-gas-url"); return; }
   const url = new URL(GAS_URL);
   Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
   url.searchParams.set("token", API_TOKEN);
-  url.searchParams.set("callback", name);
   url.searchParams.set("_", Date.now() + "" + Math.floor(Math.random() * 1000));   // ブラウザのキャッシュで古い返事を使わないようにする
-  script.src = url.toString();
-  document.body.appendChild(script);
+  let fin = false, fetchWhy = "";
+  const finish = (r, why) => { if (fin) return; fin = true; cb(r, r ? "" : (fetchWhy ? fetchWhy + "/" : "") + (why || "")); };
+
+  const viaScript = () => {
+    const name = "__g" + (++pollSeq) + "_" + Math.floor(Math.random() * 1e6);
+    const script = document.createElement("script");
+    const u = new URL(url.toString());
+    u.searchParams.set("callback", name);
+    const cleanup = () => { try { delete window[name]; } catch (e) { window[name] = undefined; } script.remove(); };
+    const timer = setTimeout(() => { cleanup(); finish(null, "script-timeout"); }, 15000);
+    window[name] = r => { clearTimeout(timer); cleanup(); finish(r); };
+    script.onerror = () => { clearTimeout(timer); cleanup(); finish(null, "script-error"); };
+    script.src = u.toString();
+    document.body.appendChild(script);
+  };
+
+  if (typeof fetch !== "function") { viaScript(); return; }
+  const fu = new URL(url.toString());
+  fu.searchParams.set("callback", "cb");
+  const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, 12000);
+  fetch(fu.toString(), { credentials: "omit", cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+    .then(r => r.text())
+    .then(t => {
+      clearTimeout(timer);
+      const m = t.match(/^[^({]*\(([\s\S]*)\)\s*;?\s*$/);       // cb({...}); の中身を取り出す
+      let obj = null;
+      try { obj = JSON.parse(m ? m[1] : t); } catch (e) { obj = null; }
+      if (obj && typeof obj === "object") finish(obj); else { fetchWhy = "fetch-notjson"; viaScript(); }
+    })
+    .catch(e => { clearTimeout(timer); fetchWhy = "fetch-" + ((e && e.name) || "error"); viaScript(); });
+}
+
+// ---------- 状態の取得(1回で お知らせ+抽選受付+自分の状態 を取る) ----------
+function pollStatus() {
+  if (!gasReady() || polling || document.hidden) return;
+  polling = true;
+  const params = { action: "status" };
+  if (isComplete()) params.participantId = getParticipantId();
+  gasGet(params, res => { polling = false; if (res) applyStatus(res); });
 }
 
 // 景品所のQR(?lottery=1)を読んだ → くじの順番待ちに入る
