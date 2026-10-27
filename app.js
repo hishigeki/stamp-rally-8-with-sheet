@@ -190,12 +190,12 @@ function pollStatus() {
 // 景品所のQR(?lottery=1)を読んだ → くじの順番待ちに入る
 const ENTER_MSG = {
   CLOSED: "くじは おわりました。",
-  DUPLICATE: "くじは 1人 1回だけです。もう ひいています。",
+  DUPLICATE: "くじは 1人 1回だけです。もう 受付が すんでいます。",
   NOT_COMPLETE: "まだ 12こ そろっていません。スタンプを あつめてから、もう一度 よみとってください。",
   UNKNOWN_ID: "まだ きろくが とどいていません。少し まってから、もう一度 QRコードを よみとってください。"
 };
 function enterLottery() {
-  if (isFinished()) { showMessage("くじは 1人 1回だけです。もう ひいています。", "warning"); return; }
+  if (isFinished()) { showMessage("くじは 1人 1回だけです。もう 受付が すんでいます。", "warning"); return; }
   if (loadStamps().length < STAMP_TOTAL) { showMessage("まだ 12こ そろっていません。1〜12番の スタンプを あつめてから、景品引換所の 「13番」の QRコードを よみとってください。", "warning"); return; }
   sendComplete();                                   // 念のため、コンプリートを先に送る
   queueMsg = "順番まちに 入っています…"; queueDetail = "";
@@ -271,7 +271,7 @@ function handleUrlAction() {
 function acquireStamp(token) {
   const info = STAMP_MAP.find(i => i.token === token);
   if (!info) { showMessage("この QRコードは スタンプラリーの ものでは ありません。", "warning"); return { status: "invalid" }; }
-  if (isFinished()) { showMessage("くじは 1人 1回だけです。もう ひいています。", "warning"); return { status: "finished" }; }
+  if (isFinished()) { showMessage("くじは 1人 1回だけです。もう 受付が すんでいます。", "warning"); return { status: "finished" }; }
   const stamps = loadStamps();
   if (stamps.some(s => s.id === info.number)) {
     showMessage(`${info.number}番の スタンプは もう あります。`, "warning");
@@ -376,7 +376,7 @@ function renderQueue() {
     const n = document.createElement("p"); n.className = "queue-no"; n.textContent = "受付番号 " + q.no;
     const m = document.createElement("p");
     if (q.lane) {
-      m.textContent = q.lane === 9 ? "会場に 入って、くじ引き機の 列に ならんでください。画面に 受付番号が 出たら、あなたの 番です。"
+      m.textContent = q.lane === 9 ? "会場に 入って、くじ引き機の 列に ならんでください。あとは 係の 人の あんないに したがってね。"
         : "会場に 入って、くじ引き機 " + (q.lane === 1 ? "①(スペースキー・青)" : "②(マウスの クリック・オレンジ)") + " の 列に ならんでください。画面に 受付番号が 出たら、あなたの 番です。";
     } else if (q.state === "waiting" && q.ahead > 0) {
       m.textContent = "いま 会場が いっぱいです。階段で 2列に ならんで まってください。あなたの 前に " + q.ahead + " 人 います。順番に なると、この 画面が かわります。";
