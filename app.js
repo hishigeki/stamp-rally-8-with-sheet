@@ -13,8 +13,12 @@ const GAS_URL =
 
 // 参加者画面用の公開トークン(register / complete / status だけ許可。景品の交換はできません)
 const API_TOKEN = "api_1438d5a18d8959b0b8479f6e0a5cb2f9";
-// 景品所に貼る「13番」のQR。スタンプの絵は出さず、読むと(12個そろっていれば)くじの順番待ちに入る
+// 景品所に貼る「13番」のQR: 読むと(12個そろっていれば)スマホでくじを引く画面(red.oist.ac.jp)へ進む。混んでいるとき用
 const VENUE_TOKEN = "ZA0fWrLOAwbr1MzWscg";
+// 景品所に貼る「14番」のQR: 読むと、パソコンのくじの順番待ちに入る。空いているとき用
+const VENUE_PC_TOKEN = "SGLI2EfzColwGuobekf";
+// スマホで引く窓口(red.oist.ac.jp)。13番のQRを読むと、ここへ進む
+const PHONE_DRAW_URL = "https://red.oist.ac.jp/fuku/";
 const RESET_TOKEN = "reset_54684587fc46e0d51ad57570";
 
 const STAMP_MAP = [
@@ -194,9 +198,19 @@ const ENTER_MSG = {
   NOT_COMPLETE: "まだ 12こ そろっていません。スタンプを あつめてから、もう一度 よみとってください。",
   UNKNOWN_ID: "まだ きろくが とどいていません。少し まってから、もう一度 QRコードを よみとってください。"
 };
+// 13番のQR: スマホで くじを 引く画面(red.oist.ac.jp)へ。参加者IDを引き継ぐ
+function goPhoneDraw() {
+  if (isFinished()) { showMessage("くじは 1人 1回だけです。もう 受付が すんでいます。", "warning"); return; }
+  if (loadStamps().length < STAMP_TOTAL) { showMessage("まだ 12こ そろっていません。1〜12番の スタンプを あつめてから、もう一度 よみとってください。", "warning"); return; }
+  if (!PHONE_DRAW_URL) { enterLottery(); return; }
+  sendComplete();                                   // 念のため、コンプリートを先に送る
+  showMessage("スマホの くじの 画面に すすみます…", "success");
+  setTimeout(() => { location.href = PHONE_DRAW_URL + "?id=" + encodeURIComponent(getParticipantId()); }, 1300);
+}
+
 function enterLottery() {
   if (isFinished()) { showMessage("くじは 1人 1回だけです。もう 受付が すんでいます。", "warning"); return; }
-  if (loadStamps().length < STAMP_TOTAL) { showMessage("まだ 12こ そろっていません。1〜12番の スタンプを あつめてから、景品引換所の 「13番」の QRコードを よみとってください。", "warning"); return; }
+  if (loadStamps().length < STAMP_TOTAL) { showMessage("まだ 12こ そろっていません。1〜12番の スタンプを あつめてから、景品引換所で 「13番」か 「14番」の QRコードを よみとってください。", "warning"); return; }
   sendComplete();                                   // 念のため、コンプリートを先に送る
   queueMsg = "順番まちに 入っています…"; queueDetail = "";
   renderBoard();
@@ -262,7 +276,8 @@ function handleUrlAction() {
   const stampToken = params.get("s"), reset = params.get("reset");
   if (reset) { resetByAdminQr(reset); cleanUrl(); return; }
   if (!stampToken) return;
-  if (stampToken === VENUE_TOKEN) { cleanUrl(); wantEnter = true; return; }
+  if (stampToken === VENUE_PC_TOKEN) { cleanUrl(); wantEnter = true; return; }
+  if (stampToken === VENUE_TOKEN) { cleanUrl(); wantPhone = true; return; }
   cleanUrl();
   acquireStamp(stampToken);
 }
@@ -286,6 +301,7 @@ function acquireStamp(token) {
 }
 let lastNew = "";
 let wantEnter = false;
+let wantPhone = false;
 
 // ---------- 描画 ----------
 function showParticipantQr(pid) {
@@ -349,7 +365,7 @@ function renderBoard() {
       completeText.textContent = "コンプリート!";
       completeArea.classList.remove("hidden");
       showParticipantQr(pid);
-      if (!queueInfo && !queueMsg) showMessage("コンプリート! 景品引換所の 「13番」の QRコードを スマホの カメラで よみとると、くじの 順番まちに 入れます。", "success");
+      if (!queueInfo && !queueMsg) showMessage("コンプリート! 景品引換所で、係の 人の 案内に したがって、「13番」(スマホで くじを 引く)か 「14番」(パソコンの くじの 順番まち)の QRコードを スマホの カメラで よみとってください。", "success");
       sendComplete();
     } else {
       completeText.textContent = "コンプリート!";
@@ -412,6 +428,7 @@ getParticipantId();
 handleUrlAction();
 renderBoard();
 if (wantEnter) enterLottery();
+if (wantPhone) goPhoneDraw();
 showIntroOnce();
 setTimeout(pollStatus, 300 + Math.random() * 1200);
 schedulePoll();
